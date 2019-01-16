@@ -2,7 +2,7 @@
 Measure and visualise Environment click sensor readings using the WolkAbout platform.
 
 ##Things used in this project
-###Hardware components
+######Hardware components
 - [Arduino MKR1000 WiFi](https://www.hackster.io/arduino/products/arduino-mkr1000)
 - [Environment click](https://www.mikroe.com/environment-click)
 
