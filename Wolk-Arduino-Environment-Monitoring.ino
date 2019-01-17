@@ -213,7 +213,7 @@ void loop() {
     wolk_add_numeric_sensor_reading(&wolk, "T", bme.temperature, 0);
     wolk_add_numeric_sensor_reading(&wolk, "H", bme.humidity, 0);
     wolk_add_numeric_sensor_reading(&wolk, "P", bme.pressure / 100.0, 0);
-    wolk_add_numeric_sensor_reading(&wolk, "GR", bme.gas_resistance / 1000.0, 0);
+    wolk_add_numeric_sensor_reading(&wolk, "GR", bme.gas_resistance, 0);
     wolk_add_numeric_sensor_reading(&wolk, "A", bme.readAltitude(SEALEVELPRESSURE_HPA), 0);
     
     /*set new alarm*/
