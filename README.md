@@ -2,7 +2,7 @@
 
 ### Story
 
-We had some Environment click sensors lying around so we decided to hook them up to the MKR1000 and visualise them on the [Wolkabout platform](https://demo.wolkabout.com/). The examples provided within the libraries we used made it quick to implement.
+We had some Environment click sensors lying around so we decided to hook them up to the MKR1000 and visualise them on the [Wolkabout platform](https://demo.wolkabout.com/).
 The idea is to do the measurement every 15 minutes and publish the results once every hour.
 If the publish fails (due to a busy network or some other issue) the results should be persisted in Flash memory of the device. With max. 24 writes a day we avoid getting the Flash in a faulty state (Arduino guarantees 10000 write cycles).
 In the meantime all components go into sleep mode in order to minimise the power consumption. 
@@ -31,7 +31,7 @@ All libraries are available via the Arduino Library Manager.
 The starting point for this project were the examples provided in the [WolkConnect-Arduino library](https://github.com/Wolkabout/WolkConnect-Arduino).
 
 The flash persistence example provides all the necessary functions for a custom persistence implementation. It implements a structure of a circular buffer and uses it to store the measurement results. There is also an implementation of how to store that structure in Flash memory using the Flash storage library.
-The Timed measure example implements timed reading and publishing of the data using RTCZero library. All you need to do is change time variables in order to represent the actual time and set the intervals you wish to use for the read and publish.
+The Timed measure example implements timed reading and publishing of the data using RTCZero library. All you need to do is change time variables in order to represent the actual time and set the intervals you wish to use for the read and publish. The RTCZero library will stop the USB clock when going to sleep, so will see no output on the serial monitor.
 The sensor also has a library which makes reading easy.
 The alarm interrupt changes flags for tasks that need to be done (read and publish). The rest of the work falls on the loop function.
 Here we check if we need to read or publish and go to sleep when it's all done. For minimal power consumtion, WiFi is set to be in a low power mode as well as the MKR1000. The sensors go to low power automaticaly until a reading is requested.
