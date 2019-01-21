@@ -40,6 +40,8 @@ int portno = 1883;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+WiFiClient httpClient;
+
 /* WolkConnect-Arduino Connector context */
 static wolk_ctx_t wolk;
 /* Init flash storage */
@@ -48,15 +50,7 @@ FlashStorage(flash_store, Messages);
 Adafruit_BME680 bme;
 
 RTCZero rtc;
-/* Change these values to set the current initial time */
-const byte seconds = 0;
-const byte minutes = 0;
-const byte hours = 17;
 
-/* Change these values to set the current initial date */
-const byte day = 17;
-const byte month = 11;
-const byte year = 15;
 bool read;
 /*Read sensor every 15 minutes. If you change this parameter
 make sure that it's <60*/
@@ -65,7 +59,7 @@ bool publish;
 /*Publish every hour. If you change this parameter
 make sure that it's <24*/
 const byte publishEvery = 1;
-byte publishHours = (hours + publishEvery) % 24;
+byte publishHours;
 
 /*Flash storage and custom persistence implementation*/
 void _flash_store()
@@ -161,6 +155,26 @@ void setup() {
   _init();
   
   setup_wifi();
+  
+  /*Get current epoch from server*/
+  httpClient.connect("now.httpbin.org", 80)
+
+  httpClient.println("GET / HTTP/1.1");
+  httpClient.println("Host: now.httpbin.org");
+  httpClient.println("Connection: close");
+  httpClient.println();
+
+  httpClient.find("\"epoch\": ");
+  char epochChar[11];
+  char c = httpClient.read();
+  int i = 0;
+  while((httpClient.available()) && c != '.')
+  {
+    epochChar[i] = c;
+    i++;
+    c = httpClient.read();
+  }
+  int epoch = atoi(epochChar);
 
   wolk_init(&wolk, NULL, NULL, NULL, NULL,
             device_key, device_password, &client, hostname, portno, PROTOCOL_JSON_SINGLE, NULL, NULL);
@@ -182,13 +196,13 @@ void setup() {
 
   rtc.begin();
 
-  rtc.setTime(hours, minutes, seconds);
-  rtc.setDate(day, month, year);
+  rtc.setEpoch(epoch);
 
   rtc.setAlarmTime(17, 00, 10);
   rtc.enableAlarm(rtc.MATCH_MMSS);
 
   rtc.attachInterrupt(alarmMatch);
+  publishHours = (rtc.getHours() + publishEvery) % 24;
   
   WiFi.lowPowerMode();
   rtc.standbyMode();
