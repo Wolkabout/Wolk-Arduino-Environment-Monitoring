@@ -15,6 +15,7 @@ In the meantime all components go into sleep mode in order to minimise the power
 ##### Software
 - [Arduino IDE](https://www.arduino.cc/en/main/software)
 - [WiFi101 library](https://github.com/arduino-libraries/WiFi101)
+- [Adafruit Unified Sensor library](https://github.com/adafruit/Adafruit_Sensor)
 - [Adafruit BME680 library](https://github.com/adafruit/Adafruit_BME680)
 - [RTCZero library](https://github.com/arduino-libraries/RTCZero)
 - [Flash storage library](https://github.com/cmaglie/FlashStorage)
