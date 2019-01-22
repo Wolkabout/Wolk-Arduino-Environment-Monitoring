@@ -1,5 +1,5 @@
 #include <Adafruit_Sensor.h>
-#include "Adafruit_BME680.h"
+#include <Adafruit_BME680.h>
 #include <bme680_defs.h>
 #include <bme680.h>
 
@@ -34,7 +34,7 @@ const char* ssid = "ssid";
 const char* wifi_pass = "wifi_pass";
 
 const char *device_key = "device_key";
-const char *device_password = "device_password";
+const char *device_password = "device_key";
 const char* hostname = "api-demo.wolkabout.com";
 int portno = 1883;
 
@@ -53,14 +53,14 @@ Adafruit_BME680 bme;
 RTCZero rtc;
 
 bool read;
-/*Read sensor every 15 minutes. If you change this parameter
+/*Read sensor every minute. If you change this parameter
 make sure that it's <60*/
-const byte readEvery = 15;
+const byte readEvery = 1;
 bool publish;
-/*Publish every hour. If you change this parameter
-make sure that it's <24*/
-const byte publishEvery = 1;
-byte publishHours;
+/*Publish every 10 minutes. If you change this parameter
+make sure that it's <60*/
+const byte publishEvery = 10;
+byte publishMin;
 
 /*Flash storage and custom persistence implementation*/
 void _flash_store()
@@ -149,7 +149,7 @@ void setup_wifi() {
 }
 
 void setup() {
-  
+  Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
   /*Initialize the circular buffer structure*/
@@ -185,9 +185,7 @@ void setup() {
             device_key, device_password, &client, hostname, portno, PROTOCOL_JSON_SINGLE, NULL, NULL);
 
   wolk_init_custom_persistence(&wolk, _push, _peek, _pop, _is_empty);
-
-  delay(1000);
-  wolk_connect(&wolk);
+  
   /*The on board LED will turn on if something went wrong*/
   if(!bme.begin())
   {
@@ -200,29 +198,18 @@ void setup() {
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 
-  delay(100);
+  delay(200);
 
-  if (!bme.performReading()) {
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
-  //initial readings
-  wolk_add_numeric_sensor_reading(&wolk, "T", bme.temperature, rtc.getEpoch());
-  wolk_add_numeric_sensor_reading(&wolk, "H", bme.humidity, rtc.getEpoch());
-  wolk_add_numeric_sensor_reading(&wolk, "P", bme.pressure / 100.0, rtc.getEpoch());
-  wolk_add_numeric_sensor_reading(&wolk, "GR", bme.gas_resistance, rtc.getEpoch());
-  wolk_add_numeric_sensor_reading(&wolk, "A", bme.readAltitude(SEALEVELPRESSURE_HPA), rtc.getEpoch());
-  delay(100);
-  
-  wolk_publish(&wolk);
+  read = true;
+  publish = true;
 
   rtc.setAlarmTime(rtc.getHours(), (rtc.getMinutes() + readEvery) % 60, rtc.getSeconds());
   rtc.enableAlarm(rtc.MATCH_MMSS);
 
   rtc.attachInterrupt(alarmMatch);
-  publishHours = (rtc.getHours() + publishEvery) % 24;
+  publishMin = (rtc.getMinutes() + publishEvery) % 60;
   
   WiFi.lowPowerMode();
-  rtc.standbyMode();
 
 }
 
@@ -236,7 +223,8 @@ void loop() {
   if(read)
   {
     read = false;
-
+    Serial.println("read");
+    
     if (!bme.performReading()) {
     digitalWrite(LED_BUILTIN, HIGH);
     }
@@ -262,21 +250,24 @@ void loop() {
       _flash_store();
     }
     delay(100);
-    wolk_publish(&wolk);
+    if(wolk_publish(&wolk) == W_TRUE)
+    {
+    _flash_store();
+    }
     /*set new publish time*/
-    publishHours = (rtc.getHours() + publishEvery) % 24;
+    publishMin = (rtc.getMinutes() + publishEvery) % 60;
     delay(100);
     wolk_disconnect(&wolk);
     delay(100);
   }
-  rtc.standbyMode();
-
+  delay(100);
+  
 }
 /*Timed interrupt routine*/
 void alarmMatch()
 {
   read = true;
-  if(publishHours == rtc.getHours())
+  if(publishMin == rtc.getMinutes())
   {
     publish = true;
   }
