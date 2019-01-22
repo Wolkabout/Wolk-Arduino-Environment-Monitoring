@@ -30,11 +30,11 @@ typedef struct{
 
 static Messages data;
 /*Connection details*/
-const char* ssid = "OpenWrt";
-const char* wifi_pass = "basdobrasifra123";
+const char* ssid = "ssid";
+const char* wifi_pass = "wifi_pass";
 
-const char *device_key = "2hqdwxw3vq49qi9q";
-const char *device_password = "ac26ee84-4b12-4d3b-95b9-6218be8e36e3";
+const char *device_key = "device_key";
+const char *device_password = "device_password";
 const char* hostname = "api-demo.wolkabout.com";
 int portno = 1883;
 
