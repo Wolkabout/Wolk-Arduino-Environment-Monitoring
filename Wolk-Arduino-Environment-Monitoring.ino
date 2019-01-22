@@ -1,4 +1,5 @@
-#include <Adafruit_BME680.h>
+#include <Adafruit_Sensor.h>
+#include "Adafruit_BME680.h"
 #include <bme680_defs.h>
 #include <bme680.h>
 
@@ -157,7 +158,7 @@ void setup() {
   setup_wifi();
   
   /*Get current epoch from server*/
-  httpClient.connect("now.httpbin.org", 80)
+  httpClient.connect("now.httpbin.org", 80);
 
   httpClient.println("GET / HTTP/1.1");
   httpClient.println("Host: now.httpbin.org");
@@ -224,11 +225,11 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
     }
     
-    wolk_add_numeric_sensor_reading(&wolk, "T", bme.temperature, 0);
-    wolk_add_numeric_sensor_reading(&wolk, "H", bme.humidity, 0);
-    wolk_add_numeric_sensor_reading(&wolk, "P", bme.pressure / 100.0, 0);
-    wolk_add_numeric_sensor_reading(&wolk, "GR", bme.gas_resistance, 0);
-    wolk_add_numeric_sensor_reading(&wolk, "A", bme.readAltitude(SEALEVELPRESSURE_HPA), 0);
+    wolk_add_numeric_sensor_reading(&wolk, "T", bme.temperature, rtc.getEpoch());
+    wolk_add_numeric_sensor_reading(&wolk, "H", bme.humidity, rtc.getEpoch());
+    wolk_add_numeric_sensor_reading(&wolk, "P", bme.pressure / 100.0, rtc.getEpoch());
+    wolk_add_numeric_sensor_reading(&wolk, "GR", bme.gas_resistance, rtc.getEpoch());
+    wolk_add_numeric_sensor_reading(&wolk, "A", bme.readAltitude(SEALEVELPRESSURE_HPA), rtc.getEpoch());
     
     /*set new alarm*/
     int alarmMin = (rtc.getMinutes() + readEvery) % 60;
