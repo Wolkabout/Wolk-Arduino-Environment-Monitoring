@@ -177,6 +177,10 @@ void setup() {
   }
   int epoch = atoi(epochChar);
 
+  rtc.begin();
+
+  rtc.setEpoch(epoch);
+
   wolk_init(&wolk, NULL, NULL, NULL, NULL,
             device_key, device_password, &client, hostname, portno, PROTOCOL_JSON_SINGLE, NULL, NULL);
 
@@ -194,12 +198,18 @@ void setup() {
   bme.setPressureOversampling(BME680_OS_4X);
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
+  //initial readings
+  wolk_add_numeric_sensor_reading(&wolk, "T", bme.temperature, rtc.getEpoch());
+  wolk_add_numeric_sensor_reading(&wolk, "H", bme.humidity, rtc.getEpoch());
+  wolk_add_numeric_sensor_reading(&wolk, "P", bme.pressure / 100.0, rtc.getEpoch());
+  wolk_add_numeric_sensor_reading(&wolk, "GR", bme.gas_resistance, rtc.getEpoch());
+  wolk_add_numeric_sensor_reading(&wolk, "A", bme.readAltitude(SEALEVELPRESSURE_HPA), rtc.getEpoch());
+  delay(100);
+  wolk_connect(&wolk);
+  delay(100);
+  wolk_publish(&wolk);
 
-  rtc.begin();
-
-  rtc.setEpoch(epoch);
-
-  rtc.setAlarmTime(17, 00, 10);
+  rtc.setAlarmTime(rtc.getHours(), (rtc.getMinutes() + readEvery) % 60, rtc.getSeconds());
   rtc.enableAlarm(rtc.MATCH_MMSS);
 
   rtc.attachInterrupt(alarmMatch);
