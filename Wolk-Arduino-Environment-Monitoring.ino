@@ -30,11 +30,11 @@ typedef struct{
 
 static Messages data;
 /*Connection details*/
-const char* ssid = "ssid";
-const char* wifi_pass = "pass";
+const char* ssid = "OpenWrt";
+const char* wifi_pass = "basdobrasifra123";
 
-const char *device_key = "device_key";
-const char *device_password = "device_password";
+const char *device_key = "2hqdwxw3vq49qi9q";
+const char *device_password = "ac26ee84-4b12-4d3b-95b9-6218be8e36e3";
 const char* hostname = "api-demo.wolkabout.com";
 int portno = 1883;
 
@@ -187,6 +187,7 @@ void setup() {
   wolk_init_custom_persistence(&wolk, _push, _peek, _pop, _is_empty);
 
   delay(1000);
+  wolk_connect(&wolk);
   /*The on board LED will turn on if something went wrong*/
   if(!bme.begin())
   {
@@ -198,6 +199,12 @@ void setup() {
   bme.setPressureOversampling(BME680_OS_4X);
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
+
+  delay(100);
+
+  if (!bme.performReading()) {
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
   //initial readings
   wolk_add_numeric_sensor_reading(&wolk, "T", bme.temperature, rtc.getEpoch());
   wolk_add_numeric_sensor_reading(&wolk, "H", bme.humidity, rtc.getEpoch());
@@ -205,8 +212,7 @@ void setup() {
   wolk_add_numeric_sensor_reading(&wolk, "GR", bme.gas_resistance, rtc.getEpoch());
   wolk_add_numeric_sensor_reading(&wolk, "A", bme.readAltitude(SEALEVELPRESSURE_HPA), rtc.getEpoch());
   delay(100);
-  wolk_connect(&wolk);
-  delay(100);
+  
   wolk_publish(&wolk);
 
   rtc.setAlarmTime(rtc.getHours(), (rtc.getMinutes() + readEvery) % 60, rtc.getSeconds());
