@@ -134,8 +134,16 @@ bool _is_empty()
 {
     return data.empty;
 }
-
-void setup_wifi() {
+void init_wifi()
+{
+  if ( WiFi.status() != WL_CONNECTED) {
+    while (WiFi.begin(ssid, wifi_pass) != WL_CONNECTED) {
+      delay(1000);
+    }
+  }
+}
+void setup_wifi() 
+{
 
   delay(10);
 
@@ -159,7 +167,7 @@ void setup() {
   /*Initialize the circular buffer structure*/
   _init();
   
-  setup_wifi();
+  init_wifi();
   
   /*Get current epoch from server*/
   httpClient.connect("now.httpbin.org", 80);
