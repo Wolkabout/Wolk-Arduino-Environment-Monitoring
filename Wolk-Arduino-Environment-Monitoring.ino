@@ -138,12 +138,16 @@ bool _is_empty()
 void setup_wifi() {
 
   delay(10);
-  // We start by connecting to a WiFi network
-  WiFi.begin(ssid);
 
   if ( WiFi.status() != WL_CONNECTED) {
+    int numAttempts = 0;
     while (WiFi.begin(ssid, wifi_pass) != WL_CONNECTED) {
-      delay(300);
+      numAttempts++;
+      if(numAttempts == 10){
+        Serial.println("Couldn't reach WiFi!");
+        break;
+      }
+      delay(1000);
     }
   }
 }
@@ -223,7 +227,7 @@ void loop() {
   if(read)
   {
     read = false;
-    Serial.println("read");
+    Serial.println("Read!");
     
     if (!bme.performReading()) {
     digitalWrite(LED_BUILTIN, HIGH);
@@ -244,6 +248,7 @@ void loop() {
   if(publish)
   {
     publish = false;
+    setup_wifi();
     wolk_connect(&wolk);
     if(!wolk.is_connected)
     {
