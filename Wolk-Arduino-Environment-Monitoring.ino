@@ -192,7 +192,7 @@ void setup() {
   /*Get current epoch from server*/
   wolk_connect(&wolk);
   delay(100);
-  //wolk_update_epoch(&wolk);
+  wolk_update_epoch(&wolk);
   while (!(wolk.pong_received)) {
     wolk_process(&wolk, 5);
     digitalWrite(LED_BUILTIN, HIGH);
