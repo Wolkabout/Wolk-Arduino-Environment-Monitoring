@@ -34,14 +34,12 @@ const char* ssid = "ssid";
 const char* wifi_pass = "wifi_pass";
 
 const char *device_key = "device_key";
-const char *device_password = "device_key";
+const char *device_password = "device_password";
 const char* hostname = "api-demo.wolkabout.com";
 int portno = 1883;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-
-WiFiClient httpClient;
 
 /* WolkConnect-Arduino Connector context */
 static wolk_ctx_t wolk;
@@ -161,37 +159,13 @@ void setup_wifi()
 }
 
 void setup() {
-  Serial.begin(9600);
+  
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
   /*Initialize the circular buffer structure*/
   _init();
   
   init_wifi();
-  
-  /*Get current epoch from server*/
-  httpClient.connect("now.httpbin.org", 80);
-
-  httpClient.println("GET / HTTP/1.1");
-  httpClient.println("Host: now.httpbin.org");
-  httpClient.println("Connection: close");
-  httpClient.println();
-
-  httpClient.find("\"epoch\": ");
-  char epochChar[11];
-  char c = httpClient.read();
-  int i = 0;
-  while((httpClient.available()) && c != '.')
-  {
-    epochChar[i] = c;
-    i++;
-    c = httpClient.read();
-  }
-  int epoch = atoi(epochChar);
-
-  rtc.begin();
-
-  rtc.setEpoch(epoch);
 
   wolk_init(&wolk, NULL, NULL, NULL, NULL,
             device_key, device_password, &client, hostname, portno, PROTOCOL_JSON_SINGLE, NULL, NULL);
@@ -215,6 +189,22 @@ void setup() {
   read = true;
   publish = true;
 
+  /*Get current epoch from server*/
+  wolk_connect(&wolk);
+  delay(100);
+  //wolk_update_epoch(&wolk);
+  while (!(wolk.pong_received)) {
+    wolk_process(&wolk, 5);
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(1000);
+  }
+  digitalWrite(LED_BUILTIN, LOW);
+  wolk_disconnect(&wolk);
+  
+  rtc.begin();
+
+  rtc.setEpoch(wolk.epoch_time);
+
   rtc.setAlarmTime(rtc.getHours(), (rtc.getMinutes() + readEvery) % 60, rtc.getSeconds());
   rtc.enableAlarm(rtc.MATCH_MMSS);
 
@@ -235,10 +225,9 @@ void loop() {
   if(read)
   {
     read = false;
-    Serial.println("Read!");
     
     if (!bme.performReading()) {
-    digitalWrite(LED_BUILTIN, HIGH);
+      digitalWrite(LED_BUILTIN, HIGH);
     }
     
     wolk_add_numeric_sensor_reading(&wolk, "T", bme.temperature, rtc.getEpoch());
@@ -265,7 +254,7 @@ void loop() {
     delay(100);
     if(wolk_publish(&wolk) == W_TRUE)
     {
-    _flash_store();
+      flash_store();
     }
     /*set new publish time*/
     publishMin = (rtc.getMinutes() + publishEvery) % 60;
