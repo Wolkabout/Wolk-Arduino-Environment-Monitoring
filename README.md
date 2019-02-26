@@ -3,8 +3,8 @@
 ### Story
 
 We had some Environment click sensors lying around so we decided to hook them up to the MKR1000 and visualise them on the [Wolkabout platform](https://demo.wolkabout.com/).
-The idea is to do the measurement every minute and publish the results once every 15.
-If the publish fails (due to a busy network or some other issue) the results should be persisted in Flash memory of the device. With max. 104 writes a day we avoid getting the Flash in a faulty state (Arduino guarantees 10000 write cycles).
+The idea is to do the measurement every minute and publish the results once every 10.
+If the publish fails (due to a busy network or some other issue) the results should be persisted in Flash memory of the device. With approximately 100 writes a day we avoid getting the Flash in a faulty state (Arduino guarantees 10000 write cycles).
 In the meantime all components go into sleep mode in order to minimise the power consumption. 
 
 ## Dependencies
@@ -25,7 +25,7 @@ All libraries are available via the Arduino Library Manager.
 ##### You'll also need
 
 - An account on the [WolkAbout platform](https://demo.wolkabout.com/) and 
-- a device created using the EnvironmentClick-template.json file provided on our [GitHub](https://github.com/Wolkabout/Wolk-Arduino-Environment-Monitoring) 
+- a device created using the EnvironmentClick-deviceTemplate.json file provided on our [GitHub](https://github.com/Wolkabout/Wolk-Arduino-Environment-Monitoring) 
 
 ### How it works
 
@@ -44,8 +44,8 @@ You'll need the Arduino MKR1000 and the Environment click sensor.
 The Environment click sensor is hooked up to the I2C communication pins (namely 11 and 12 on the MKR1000), Vcc and ground.
 #### Software
 After registering an account on the [WolkAbout platform](https://demo.wolkabout.com/) click on Devices->Device templates.
-Then click on the plus sign to add template. Select "Upload".
-When prompted use the EnvironmentClick-template.json provided on our GitHub. You should now see the template on the list. Click on it.
+Then click on the plus sign to add device template. Select "Upload".
+When prompted use the EnvironmentClick-deviceTemplate.json provided on our GitHub. You should now see the template on the list. Click on it.
 In the next step click the Create device button, name it and be sure to send the key/pass combination to your mail or copy/paste it someplace, because you're going to need it in order to connect to the device.
 Open the .ino file and change the connection details to suit your own wifi and device.
 Change the time values if you desire so.
