@@ -254,7 +254,7 @@ void loop() {
     delay(100);
     if(wolk_publish(&wolk) == W_TRUE)
     {
-      flash_store();
+      _flash_store();
     }
     /*set new publish time*/
     publishMin = (rtc.getMinutes() + publishEvery) % 60;
