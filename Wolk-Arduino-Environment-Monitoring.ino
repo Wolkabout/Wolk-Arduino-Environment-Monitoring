@@ -194,7 +194,7 @@ void setup() {
   delay(100);
   wolk_update_epoch(&wolk);
   while (!(wolk.pong_received)) {
-    wolk_process(&wolk, 5);
+    wolk_process(&wolk);
     digitalWrite(LED_BUILTIN, HIGH);
     delay(1000);
   }
