@@ -13,11 +13,11 @@
 #define SEALEVELPRESSURE_HPA (1013.25)
 
 /*Connection details*/
-const char* ssid = "OpenWrt";
-const char* wifi_pass = "basdobrasifra123";
+const char* ssid = "ssid";
+const char* wifi_pass = "pass";
 
-const char *device_key = "xawa5fryg6y5denm";
-const char *device_password = "f6a9549b-1717-4f4d-bb8b-2b49c55de165";
+const char *device_key = "device_key";
+const char *device_password = "device_password";
 const char* hostname = "api-demo.wolkabout.com";
 int portno = 1883;
 
