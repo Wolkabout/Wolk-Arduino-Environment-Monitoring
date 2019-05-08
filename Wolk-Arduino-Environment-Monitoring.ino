@@ -5,7 +5,6 @@
 
 #include <WiFi101.h>
 #include <RTCZero.h>
-#include <FlashStorage.h>
 
 #include "WolkConn.h"
 #include "MQTTClient.h"
@@ -13,28 +12,12 @@
 #define STORAGE_SIZE 32
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-/*Circular buffer to store outbound messages to persist*/
-typedef struct{
-
-  boolean valid;
-
-  outbound_message_t outbound_messages[STORAGE_SIZE];
-
-  uint32_t head;
-  uint32_t tail;
-
-  boolean empty;
-  boolean full;
-
-} Messages;
-
-static Messages data;
 /*Connection details*/
-const char* ssid = "ssid";
-const char* wifi_pass = "wifi_pass";
+const char* ssid = "OpenWrt";
+const char* wifi_pass = "basdobrasifra123";
 
-const char *device_key = "device_key";
-const char *device_password = "device_pass";
+const char *device_key = "xawa5fryg6y5denm";
+const char *device_password = "f6a9549b-1717-4f4d-bb8b-2b49c55de165";
 const char* hostname = "api-demo.wolkabout.com";
 int portno = 1883;
 
@@ -43,8 +26,7 @@ PubSubClient client(espClient);
 
 /* WolkConnect-Arduino Connector context */
 static wolk_ctx_t wolk;
-/* Init flash storage */
-FlashStorage(flash_store, Messages);
+
 /*Init i2c sensor communication*/
 Adafruit_BME680 bme;
 
@@ -54,116 +36,21 @@ bool read;
 /*Read sensor every minute. If you change this parameter
 make sure that it's <60*/
 const byte readEvery = 1;
+
 bool publish;
 /*Publish every 10 minutes. If you change this parameter
 make sure that it's <60*/
 const byte publishEvery = 10;
 byte publishMin;
 
-/*Flash storage and custom persistence implementation*/
-void _flash_store()
-{
-  data.valid = true;
-  flash_store.write(data);
-}
-void increase_pointer(uint32_t* pointer)
-{
-    if ((*pointer) == (STORAGE_SIZE - 1))
-    {
-        (*pointer) = 0;
-    }
-    else
-    {
-        (*pointer)++;
-    }
-}
-
-void _init()
-{
-    data = flash_store.read();
-
-    if (data.valid == false)
-    {
-      data.head = 0;
-      data.tail = 0;
-
-      data.empty = true;
-      data.full = false;
-
-    }
-}
-
-bool _push(outbound_message_t* outbound_message)
-{
-    if(data.full)
-    {
-        increase_pointer(&data.head);
-    }
-
-    memcpy(&data.outbound_messages[data.tail], outbound_message, sizeof(outbound_message_t));
-
-    increase_pointer(&data.tail);
-    
-    data.empty = false;
-    data.full = (data.tail == data.head);
-
-    return true;
-}
-
-bool _peek(outbound_message_t* outbound_message)
-{
-    memcpy(outbound_message, &data.outbound_messages[data.head], sizeof(outbound_message_t));
-    return true;
-}
-
-bool _pop(outbound_message_t* outbound_message)
-{
-    memcpy(outbound_message, &data.outbound_messages[data.head], sizeof(outbound_message_t));
-    
-    increase_pointer(&data.head);
-    
-    data.full = false;
-    data.empty = (data.tail == data.head);
-
-    return true;
-}
-
-bool _is_empty()
-{
-    return data.empty;
-}
-void init_wifi()
-{
-  if ( WiFi.status() != WL_CONNECTED) {
-    while (WiFi.begin(ssid, wifi_pass) != WL_CONNECTED) {
-      delay(1000);
-    }
-  }
-}
-void setup_wifi() 
-{
-
-  delay(10);
-
-  if ( WiFi.status() != WL_CONNECTED) {
-    int numAttempts = 0;
-    while (WiFi.begin(ssid, wifi_pass) != WL_CONNECTED) {
-      numAttempts++;
-      if(numAttempts == 10){
-        Serial.println("Couldn't reach WiFi!");
-        break;
-      }
-      delay(1000);
-    }
-  }
-}
-
 void setup() {
   
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
   /*Initialize the circular buffer structure*/
-  _init();
+  init_flash();
+
+  init_bme();
   
   init_wifi();
 
@@ -171,35 +58,21 @@ void setup() {
             device_key, device_password, &client, hostname, portno, PROTOCOL_JSON_SINGLE, NULL, NULL);
 
   wolk_init_custom_persistence(&wolk, _push, _peek, _pop, _is_empty);
-  
-  /*The on board LED will turn on if something went wrong*/
-  if(!bme.begin())
-  {
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
-  /*Sensor init*/
-  bme.setTemperatureOversampling(BME680_OS_8X);
-  bme.setHumidityOversampling(BME680_OS_2X);
-  bme.setPressureOversampling(BME680_OS_4X);
-  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
-  bme.setGasHeater(320, 150); // 320*C for 150 ms
 
   delay(200);
 
   read = true;
   publish = true;
 
-  /*Get current epoch from server*/
+  /*Request epoch time from platform*/
   wolk_connect(&wolk);
   delay(100);
+
+  /*This function requests and waits for
+   * the epoch time from the platform.
+   * If a problem occurred, the on-board LED will be on.
+  */
   wolk_update_epoch(&wolk);
-  while (!(wolk.pong_received)) {
-    wolk_process(&wolk);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(1000);
-  }
-  digitalWrite(LED_BUILTIN, LOW);
-  wolk_disconnect(&wolk);
   
   rtc.begin();
 
@@ -227,8 +100,15 @@ void loop() {
     read = false;
     
     if (!bme.performReading()) {
-      digitalWrite(LED_BUILTIN, HIGH);
+      Serial.println("Couldn't read data!");
     }
+
+    Serial.print("Temperature:");
+    Serial.println(bme.temperature);
+    Serial.print("Humidity:");
+    Serial.println(bme.humidity);
+    Serial.print("Pressure:");
+    Serial.println(bme.pressure);
     
     wolk_add_numeric_sensor_reading(&wolk, "T", bme.temperature, rtc.getEpoch());
     wolk_add_numeric_sensor_reading(&wolk, "H", bme.humidity, rtc.getEpoch());
