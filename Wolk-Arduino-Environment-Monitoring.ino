@@ -189,16 +189,16 @@ void setup() {
   read = true;
   publish = true;
 
-  /*Get current epoch from server*/
+  /*Request epoch time from platform*/
   wolk_connect(&wolk);
   delay(100);
+
+  /*This function requests and waits for
+   * the epoch time from the platform.
+   * If a problem occurred, the on-board LED will be on.
+  */
   wolk_update_epoch(&wolk);
-  while (!(wolk.pong_received)) {
-    wolk_process(&wolk);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(1000);
-  }
-  digitalWrite(LED_BUILTIN, LOW);
+  
   wolk_disconnect(&wolk);
   
   rtc.begin();
