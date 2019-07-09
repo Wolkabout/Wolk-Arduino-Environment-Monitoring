@@ -1,3 +1,5 @@
+extern Adafruit_BME680 bme;
+
 void init_bme()
 {
   /*The on board LED will turn on if something went wrong*/
